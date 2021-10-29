@@ -73,6 +73,7 @@ public class ProxyTask implements Runnable {
                 port = Integer.parseInt(split[1]);
             }
 
+
             //  对于非GET请求的方法，直接转发给目的服务器
             if (url == null) {
                 transfer(host, port, buffer, clientInputStream, clientOutputStream);
@@ -101,7 +102,6 @@ public class ProxyTask implements Runnable {
                 //  阻塞式监听目的服务器的返回值
                 String respFirstLine = IOUtil.readHttpLine(inputStream);
                 int code = Integer.parseInt(respFirstLine.split(" ")[1]);
-                System.out.println(respFirstLine);
                 //  缓存过期
                 if (code != 304) {
                     System.out.println("代理服务器对" + uri + "的缓存过期");
@@ -156,6 +156,7 @@ public class ProxyTask implements Runnable {
      */
     private byte[] transfer(String host, int port, StringBuffer head, InputStream body, OutputStream clientOutputStream) throws IOException {
         //  和远程服务器建立连接
+        //  TODO：有BUG，可能连不上目标服务器
         targetSocket = new Socket(host, port);
         InputStream targetServerInputStream = targetSocket.getInputStream();
         OutputStream targetServerOutputStream = targetSocket.getOutputStream();
@@ -164,9 +165,10 @@ public class ProxyTask implements Runnable {
         targetServerOutputStream.write(head.toString().getBytes());
         //  请求体不为null时写入请求体
         if (body != null) {
-            byte[] bytes = new byte[1024];
+            byte[] bytes = new byte[256 * 1024];
             int size;
-            while ((size = body.read(bytes)) >= 0) {
+            // TODO：有BUG，可能读不到完整数据；但是如果while循环读的话，如果目标服务器不关闭TCP连接，则会阻塞在这里
+            if ((size = body.read(bytes)) >= 0) {
                 targetServerOutputStream.write(bytes, 0, size);
             }
         }
@@ -185,9 +187,10 @@ public class ProxyTask implements Runnable {
     private byte[] waitTargetServerAndTransfer(OutputStream clientOutputStream,
                                                InputStream targetServerInputStream) throws IOException {
         List<byte[]> response = new ArrayList<>();
-        byte[] bytes = new byte[1024];
+        byte[] bytes = new byte[256 * 1024];
         int length;
-        while ((length = targetServerInputStream.read(bytes)) >= 0) {
+        // TODO：有BUG，可能读不到完整数据；但是如果while循环读的话，如果目标服务器不关闭TCP连接，则会阻塞在这里
+        if ((length = targetServerInputStream.read(bytes)) >= 0) {
             //  写回给客户端
             clientOutputStream.write(bytes, 0, length);
             //  收集响应结果
@@ -225,7 +228,7 @@ public class ProxyTask implements Runnable {
                 headLine = new StringBuffer();
                 continue;
             }
-            headLine.append(context[i]);
+            headLine.append((char) context[i]);
         }
         return null;
     }

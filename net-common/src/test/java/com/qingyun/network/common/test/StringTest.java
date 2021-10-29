@@ -3,6 +3,7 @@ package com.qingyun.network.common.test;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Date;
 
 /**
  * @description：
@@ -40,5 +41,19 @@ public class StringTest {
         }
         System.out.println(buffer.toString());
         System.out.println(Arrays.toString(buffer.toString().getBytes()));
+    }
+
+    @Test
+    public void dataTest() {
+        String md = "Thu, 28 Oct 2021 18:00:00 GMT";
+        Date modified = new Date(md);
+        String d = "Thu, 28 Oct 2021 17:00:00 GMT";
+        Date date = new Date(d);
+
+//        SimpleDateFormat dateformat1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        time=dateformat1.format(date);
+//        System.out.println(time);
+
+        System.out.println(modified.compareTo(date) <= 0);
     }
 }
