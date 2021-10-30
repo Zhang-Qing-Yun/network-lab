@@ -303,6 +303,8 @@ public class ProxyTask implements Runnable {
      * 拒绝代理时向客户端返回的HTTP报文
      */
     private String refuseProxy() {
-        return null;
+        String resp = "HTTP/1.1 500 Internal Server Error\r\n";
+        resp += "\r\n";
+        return resp;
     }
 }

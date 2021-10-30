@@ -59,7 +59,7 @@ public abstract class AbstractProxyServer implements ProxyServer {
                 while ((line = userReader.readLine()) != null) {
                     users.add(line);
                 }
-                config.setUrls(users);
+                config.setUsers(users);
             }
 
             //  设置要被钓鱼的用户，一行就是就是一个用户即主机地址
