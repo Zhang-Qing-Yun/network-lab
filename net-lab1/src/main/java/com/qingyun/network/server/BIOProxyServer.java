@@ -29,6 +29,8 @@ public class BIOProxyServer extends AbstractProxyServer {
     public BIOProxyServer(int port) {
         this.port = port;
 
+        //  加载配置信息
+        initConfig();
         //  创建线程池，并将其交给单例工厂来管理
         SingletonFactory singletonFactory = SingletonFactory.getInstance();
         threadPool = ThreadUtil.getMixedTargetThreadPool();

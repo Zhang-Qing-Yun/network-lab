@@ -2,6 +2,8 @@ package com.qingyun.network.task;
 
 import com.google.common.primitives.Bytes;
 import com.qingyun.network.cache.LRUCache;
+import com.qingyun.network.config.ProxyConfig;
+import com.qingyun.network.constants.ProxyConstants;
 import com.qingyun.network.factory.SingletonFactory;
 import com.qingyun.network.util.IOUtil;
 import org.apache.commons.lang3.ArrayUtils;
@@ -29,9 +31,13 @@ public class ProxyTask implements Runnable {
     //  缓存
     private final LRUCache cache;
 
+    //  配置信息
+    private final ProxyConfig config;
+
     public ProxyTask(Socket socket) {
         this.socket = socket;
         cache = SingletonFactory.getInstance().getObject(LRUCache.class);
+        config = SingletonFactory.getInstance().getObject(ProxyConfig.class);
     }
 
     @Override
@@ -73,6 +79,66 @@ public class ProxyTask implements Runnable {
                 port = Integer.parseInt(split[1]);
             }
 
+            //  网站过滤
+            if (config.getUrlRule() == ProxyConstants.ALLOW_URL) {
+                //  如果当前访问的网站没在配置文件中则拦截
+                if (!config.getUrls().contains(host)) {
+                    clientOutputStream.write(refuseProxy().getBytes());
+                    clientOutputStream.flush();
+                    return;
+                }
+            } else if (config.getUrlRule() == ProxyConstants.REFUSE_URL) {
+                //  如果要访问的网站存在于配置文件中则拦截
+                if (config.getUrls().contains(host)) {
+                    clientOutputStream.write(refuseProxy().getBytes());
+                    clientOutputStream.flush();
+                    return;
+                }
+            } else {  // 配置文件写错了
+                clientOutputStream.write(refuseProxy().getBytes());
+                clientOutputStream.flush();
+                return;
+            }
+
+            //  用户过滤
+            String clientHost = socket.getInetAddress().getHostAddress();
+            if (config.getUserRule() == ProxyConstants.ALLOW_USER) {
+                //  如果客户端的Host不在配置文件里拦截
+                if (config.getUsers().contains(clientHost)) {
+                    clientOutputStream.write(refuseProxy().getBytes());
+                    clientOutputStream.flush();
+                    return;
+                }
+            } else if (config.getUserRule() == ProxyConstants.REFUSE_USER) {
+                //  如果客户端的Host在配置文件里拦截
+                if (config.getUsers().contains(clientHost)) {
+                    clientOutputStream.write(refuseProxy().getBytes());
+                    clientOutputStream.flush();
+                    return;
+                }
+            } else {  // 配置文件写错了
+                clientOutputStream.write(refuseProxy().getBytes());
+                clientOutputStream.flush();
+                return;
+            }
+
+            //  钓鱼
+            if (config.getFishingUsers().contains(clientHost)) {
+                //  构造发送给钓鱼网站的HTTP报文
+                StringBuffer fishingHTTP = new StringBuffer();
+                fishingHTTP.append("GET " + ProxyConstants.fishingUrl + " HTTP/1.1" + "\r\n");
+                fishingHTTP.append("Host: " + ProxyConstants.fishingHost + "\r\n");
+                fishingHTTP.append("\r\n");
+                String fishingHTTPStr = fishingHTTP.toString();
+
+                //  建立连接然后发送数据
+                String[] hostAndPort = ProxyConstants.fishingHost.split(":");
+                targetSocket = new Socket(hostAndPort[0], Integer.parseInt(hostAndPort[1]));
+                OutputStream outputStream = targetSocket.getOutputStream();
+                outputStream.write(fishingHTTPStr.getBytes());
+                waitTargetServerAndTransfer(clientOutputStream, targetSocket.getInputStream());
+                return;
+            }
 
             //  对于非GET请求的方法，直接转发给目的服务器
             if (url == null) {
@@ -230,6 +296,13 @@ public class ProxyTask implements Runnable {
             }
             headLine.append((char) context[i]);
         }
+        return null;
+    }
+
+    /**
+     * 拒绝代理时向客户端返回的HTTP报文
+     */
+    private String refuseProxy() {
         return null;
     }
 }
