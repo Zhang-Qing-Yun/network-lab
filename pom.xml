@@ -12,6 +12,7 @@
         <module>net-common</module>
         <module>net-lab1</module>
         <module>net-server</module>
+        <module>net-lab2</module>
     </modules>
 
     <dependencyManagement>
