@@ -25,8 +25,8 @@ public class Client {
         }
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         cloneStream(byteArrayOutputStream, new FileInputStream(file1));
-//        ReliableProtocol client = new GBN("127.0.0.1", 7070, 8080);
-        ReliableProtocol client = new SR("127.0.0.1", 7070, 8080);
+        ReliableProtocol client = new GBN("127.0.0.1", 7070, 8080);
+//        ReliableProtocol client = new SR("127.0.0.1", 7070, 8080);
         System.out.println("开始向 127.0.0.1:7070 发送1.webp");
         client.send(byteArrayOutputStream.toByteArray());
 

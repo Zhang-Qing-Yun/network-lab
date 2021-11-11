@@ -24,8 +24,8 @@ public class Server {
                 return;
             }
         }
-//        ReliableProtocol server = new GBN("127.0.0.1", 8080, 7070);
-        ReliableProtocol server = new SR("127.0.0.1", 8080, 7070);
+        ReliableProtocol server = new GBN("127.0.0.1", 8080, 7070);
+//        ReliableProtocol server = new SR("127.0.0.1", 8080, 7070);
         System.out.println("开始从 127.0.0.1:8080 处接收1.webp");
         ByteArrayOutputStream byteArrayOutputStream;
         byte[] receive = server.receive();
